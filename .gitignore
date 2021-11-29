@@ -1,1 +1,8 @@
+# rust build directory
 /target
+
+# CHIP-8 games
+*.ch8
+
+# vscode specific
+.vscode
