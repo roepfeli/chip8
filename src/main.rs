@@ -1,23 +1,55 @@
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
-// TODO: status-register VF is ignored in all instructions!
-// TODO: Go through them all and set VF accordingly
-
-// TODO: run test-programs / games!
+use clap::{App, Arg};
 
 // TODO: fix timing-stuff in main: both emulated cycles and screen refreshrates
 // TODO: are not where they should be! (maybe completely different approach?)
 
+// TODO: add the sound-module
+
 mod chip8;
 
-const CYCLES_PER_SECOND: u32 = 700;
+const DEFAULT_FREQUENCY: &str = "700";
+
+fn parse_command_arguments() -> (String, u32) {
+    let matches = App::new("CHIP-8 Emulator")
+        .version("0.0.1")
+        .author("Felix Röpke")
+        .about("A Simple CHIP-8 emulator written in Rust")
+        .arg(
+            Arg::with_name("path")
+                .long("path")
+                .short("p")
+                .help("Path to a valid CHIP-8 ROM")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("frequency")
+                .long("frequency")
+                .short("f")
+                .help("The number of CHIP-8 instructions per second")
+                .takes_value(true),
+        )
+        .get_matches();
+
+    let path = matches
+        .value_of("path")
+        .expect("ERROR: No ROM given as an argument. Exiting...")
+        .to_string();
+    let frequency = matches.value_of("frequency").unwrap_or(DEFAULT_FREQUENCY);
+    let frequency = frequency
+        .parse::<u32>()
+        .expect("ERROR: Could not parse given frequency to integer. Exiting...");
+    (path, frequency)
+}
 
 fn main() {
+    let (path, frequency) = parse_command_arguments();
+
     let mut chip8 = chip8::Chip8::init();
 
-    chip8.load_program("Pong.ch8");
-
+    chip8.load_program(&path);
     chip8.start_timers();
 
     let mut display_time = Instant::now();
@@ -51,7 +83,7 @@ fn main() {
         }
 
         // sleep for rest of the duration until next cycle
-        let sleep_per_cycle = Duration::new(0, 1_000_000_000 / CYCLES_PER_SECOND);
+        let sleep_per_cycle = Duration::new(0, 1_000_000_000 / frequency);
         sleep_per_cycle.checked_sub(cycle_time).take().map(sleep);
     }
 

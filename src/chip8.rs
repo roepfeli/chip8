@@ -161,8 +161,6 @@ impl Chip8 {
         self.input.should_exit()
     }
 
-    // TODO: change VF accordingly
-    // TODO: handle overflow
     fn decode(&self, instruction: u16) -> Instructions {
         if instruction == 0x00e0 {
             return Instructions::ClearScreen;
@@ -292,13 +290,7 @@ impl Chip8 {
 
         self.program_counter += 2;
 
-        let inst_type = self.decode(instruction);
-
-        // println!("Instruction-Type: {:?}", inst_type);
-        // println!("Instruction: {:#06x}", instruction);
-
-        match inst_type {
-            //match decode(instruction) {
+        match self.decode(instruction) {
             Instructions::ClearScreen => {
                 self.display.clear_screen();
             }
