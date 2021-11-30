@@ -6,8 +6,6 @@ use clap::{App, Arg};
 // TODO: fix timing-stuff in main: both emulated cycles and screen refreshrates
 // TODO: are not where they should be! (maybe completely different approach?)
 
-// TODO: add the sound-module
-
 mod chip8;
 
 const DEFAULT_FREQUENCY: &str = "700";
@@ -51,6 +49,7 @@ fn main() {
 
     chip8.load_program(&path);
     chip8.start_timers();
+    chip8.start_sound_system();
 
     let mut display_time = Instant::now();
 
@@ -90,5 +89,6 @@ fn main() {
     // TODO: dont forget to implement drop for chip8: you must de-init everything
     // TODO: (do it recursively for display-sdl2 etc.) and join the threads!
     println!("Stopping CHIP-8's timer-thread...");
+    chip8.stop_sound_system();
     chip8.stop_timers();
 }

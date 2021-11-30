@@ -4,9 +4,11 @@ use std::thread::JoinHandle;
 
 use display::Display;
 use input::Input;
+use sound::Sound;
 
 mod display;
 mod input;
+mod sound;
 
 const MEMORY_SIZE: u16 = 4096;
 const PROGRAM_OFFSET: u16 = 0x200;
@@ -91,12 +93,15 @@ pub struct Chip8 {
     timer_thread: Option<JoinHandle<()>>,
     display: Display,
     input: Input,
+    sound: Sound,
 }
 
 impl Chip8 {
     pub fn init() -> Chip8 {
         // initialize sdl
         let sdl_context = sdl2::init().expect("ERROR: Unable to initialize SDL. Exiting...");
+
+        let sound_timer = Arc::new(AtomicU8::new(0));
 
         let mut chip = Chip8 {
             data_registers: [0; 16],
@@ -105,11 +110,12 @@ impl Chip8 {
             index_register: 0x00,
             stack: Vec::new(),
             delay_timer: Arc::new(AtomicU8::new(0)),
-            sound_timer: Arc::new(AtomicU8::new(0)),
+            sound_timer: sound_timer.clone(),
             thread_killer: Arc::new(AtomicBool::new(false)),
             timer_thread: None,
             display: Display::init(sdl_context.clone()),
             input: Input::init(sdl_context.clone()),
+            sound: Sound::init(&sdl_context, sound_timer),
         };
 
         chip.setup_fonts();
@@ -125,6 +131,14 @@ impl Chip8 {
         for i in 0..FONTS.len() {
             self.memory[FONT_STARTING_MEMORY as usize + i] = FONTS[i];
         }
+    }
+
+    pub fn start_sound_system(&self) {
+        self.sound.start_sound_system();
+    }
+
+    pub fn stop_sound_system(&self) {
+        self.sound.stop_sound_system();
     }
 
     pub fn stop_timers(&mut self) {
@@ -284,7 +298,6 @@ impl Chip8 {
 
     // this is the the whole fetch, decode and execute circle:
     pub fn emulate_cycle(&mut self) {
-        // TODO: rewrite this as you did in the drawSprite-method
         let instruction = ((self.memory[self.program_counter as usize] as u16) << 8)
             + (self.memory[(self.program_counter + 1) as usize]) as u16;
 

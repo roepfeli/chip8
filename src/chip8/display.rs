@@ -15,7 +15,9 @@ pub struct Display {
 
 impl Display {
     pub fn init(sdl_context: sdl2::Sdl) -> Display {
-        let video_subsystem = sdl_context.video().unwrap();
+        let video_subsystem = sdl_context
+            .video()
+            .expect("ERROR: Could not initialize video-subsystem. Exiting...");
 
         let window = video_subsystem
             .window(
